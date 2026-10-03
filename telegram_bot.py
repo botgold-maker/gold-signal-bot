@@ -24,10 +24,29 @@ DASHBOARD_URL = 'https://gold-telegram-production.up.railway.app/'
 SECRET = hashlib.sha256(TOKEN.encode()).hexdigest()
 HOOK = '/updates/' + SECRET[:20]
 FEED_KEY = os.environ.get('MT5_FEED_KEY', '')
+CONTROL_KEY = os.environ.get('MT5_CONTROL_KEY', '')
+control = {'state': 'PAUSE', 'updated': time.time(), 'ack': 0}
 latest_gold = {'bars': None, 'received': 0, 'tick_time': 0, 'account': None, 'terminal_connected': False, 'account_received': 0}
 
 class DashboardHandler(BaseHTTPRequestHandler):
     def do_POST(self):
+        if self.path == '/mt5/control/ack':
+            if not CONTROL_KEY or not hmac.compare_digest(self.headers.get('X-Control-Key', ''), CONTROL_KEY):
+                self.send_error(403)
+                return
+            try:
+                n = int(self.headers.get('Content-Length', '0'))
+                if n < 1 or n > 1024:
+                    self.send_error(400)
+                    return
+                payload = json.loads(self.rfile.read(n))
+                if payload.get('state') == control['state'] and payload.get('updated') == control['updated']:
+                    control['ack'] = time.time()
+                self.send_response(200)
+                self.end_headers()
+            except Exception:
+                self.send_error(400)
+            return
         if self.path == '/mt5/feed':
             if not FEED_KEY or not hmac.compare_digest(self.headers.get('X-Feed-Key', ''), FEED_KEY):
                 self.send_error(403)
@@ -64,6 +83,17 @@ class DashboardHandler(BaseHTTPRequestHandler):
         Thread(target=process_update, args=(data,), daemon=True).start()
 
     def do_GET(self):
+        if self.path.split('?')[0] == '/mt5/control':
+            if not CONTROL_KEY or not hmac.compare_digest(self.headers.get('X-Control-Key', ''), CONTROL_KEY):
+                self.send_error(403)
+                return
+            body = json.dumps(control).encode()
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Cache-Control', 'no-store')
+            self.end_headers()
+            self.wfile.write(body)
+            return
         if self.path.split('?')[0] == '/api/account':
             raw = self.headers.get('X-Telegram-Init-Data', '')
             try:
@@ -115,6 +145,8 @@ def menu():
         [{"text": "💎 Open Goldvvbot Dashboard", "web_app": {"url": DASHBOARD_URL}}],
         [{"text": "▶️ Start paper signals", "callback_data": "start"},
          {"text": "⏸ Pause", "callback_data": "pause"}],
+        [{"text": "🧪 Start MT5 demo", "callback_data": "demo_start"},
+         {"text": "🛡 Demo control status", "callback_data": "demo_status"}],
         [{"text": "📊 Gold signal", "callback_data": "signal"},
          {"text": "📡 Status", "callback_data": "status"}],
         [{"text": "🛑 Stop paper signals", "callback_data": "stop"},
@@ -136,10 +168,20 @@ def handle(action):
     global enabled
     if action == "start":
         enabled = True
-        return "▶️ Paper signals enabled. No trades are sent to MT5."
+        return "▶️ Paper signals enabled. MT5 demo trading remains separately locked."
     if action in ("stop", "pause"):
         enabled = False
-        return "⏸ Paper signals paused. This does NOT stop MT5 or close trades."
+        control["state"] = "PAUSE"
+        control["updated"] = time.time()
+        control["ack"] = 0
+        return "⏸ Paper signals paused. MT5 demo pause requested; existing trades are not closed."
+    if action == "demo_start":
+        control['state'] = 'START_DEMO'
+        control['updated'] = time.time()
+        control['ack'] = 0
+        return 'Demo start requested. Waiting for VPS acknowledgement; MT5 must independently allow demo trading.'
+    if action == "demo_status":
+        return 'MT5 demo control: ' + control['state'] + ('. VPS acknowledged.' if control['ack'] >= control['updated'] else '. Awaiting VPS acknowledgement.')
     if action == "status":
         return '📡 Bot online. Paper signals: ' + ('ON' if enabled else 'OFF') + '. MT5 feed: ' + ('FRESH' if latest_gold['bars'] and time.time()-latest_gold['received'] < 180 else 'WAITING') + '. Auto trading: OFF.'
     if action == "signal":
