@@ -204,7 +204,9 @@ try:
         {"command": "pause", "description": "Pause paper signals"},
         {"command": "status", "description": "Check bot status"},
         {"command": "signal", "description": "Check gold signal"},
-        {"command": "stop", "description": "Stop paper signals"}
+        {"command": "stop", "description": "Stop paper signals"},
+        {"command": "demo_status", "description": "Check VPS demo connection"},
+        {"command": "demo_start", "description": "Request MT5 demo start"}
     ]})
 except Exception as exc:
     print("Command menu setup error:", type(exc).__name__, flush=True)
