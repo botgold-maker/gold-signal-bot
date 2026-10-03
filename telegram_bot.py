@@ -4,6 +4,9 @@ import time
 import requests
 import json
 import hashlib
+import hmac
+import pandas as pd
+from datetime import datetime, timezone
 from threading import Thread
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
@@ -19,9 +22,31 @@ if not TOKEN or not OWNER:
 DASHBOARD_URL = 'https://gold-telegram-production.up.railway.app/'
 SECRET = hashlib.sha256(TOKEN.encode()).hexdigest()
 HOOK = '/updates/' + SECRET[:20]
+FEED_KEY = os.environ.get('MT5_FEED_KEY', '')
+latest_gold = {'bars': None, 'received': 0, 'tick_time': 0}
 
 class DashboardHandler(BaseHTTPRequestHandler):
     def do_POST(self):
+        if self.path == '/mt5/feed':
+            if not FEED_KEY or not hmac.compare_digest(self.headers.get('X-Feed-Key', ''), FEED_KEY):
+                self.send_error(403)
+                return
+            try:
+                n = int(self.headers.get('Content-Length', '0'))
+                if n < 1 or n > 100000:
+                    self.send_error(400)
+                    return
+                data = json.loads(self.rfile.read(n))
+                bars = data['bars']
+                if len(bars) < 52 or len(bars) > 200 or any(not all(k in bar for k in ('open','high','low','close')) for bar in bars):
+                    self.send_error(400)
+                    return
+                latest_gold.update({'bars': bars, 'received': time.time(), 'tick_time': int(data.get('tick_time',0))})
+                self.send_response(200)
+                self.end_headers()
+            except Exception:
+                self.send_error(400)
+            return
         if self.path != HOOK or self.headers.get('X-Telegram-Bot-Api-Secret-Token') != SECRET:
             self.send_error(403)
             return
@@ -81,12 +106,15 @@ def handle(action):
         enabled = False
         return "⏸ Paper signals paused. This does NOT stop MT5 or close trades."
     if action == "status":
-        return "📡 Bot online. Paper signals: " + ("ON" if enabled else "OFF") + ". MT5: NOT CONNECTED."
+        return '📡 Bot online. Paper signals: ' + ('ON' if enabled else 'OFF') + '. MT5 feed: ' + ('FRESH' if latest_gold['bars'] and time.time()-latest_gold['received'] < 180 else 'WAITING') + '. Auto trading: OFF.'
     if action == "signal":
         if not enabled:
             return "Paper signals paused. Tap Start paper signals first."
         try:
-            return "📊 Paper-only gold signal: " + str(signal(fetch()))
+            if not latest_gold['bars'] or time.time() - latest_gold['received'] > 180:
+                return 'MT5 gold feed unavailable or stale. No signal generated.'
+            df = pd.DataFrame(latest_gold['bars'])
+            return '📊 MT5 demo paper signal: ' + str(signal(df))
         except Exception as exc:
             return "Market signal unavailable: " + str(exc)[:200]
     return "Gold bot control panel — PAPER ONLY. Choose a button below."
