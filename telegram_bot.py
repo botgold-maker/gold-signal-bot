@@ -23,7 +23,7 @@ DASHBOARD_URL = 'https://gold-telegram-production.up.railway.app/'
 SECRET = hashlib.sha256(TOKEN.encode()).hexdigest()
 HOOK = '/updates/' + SECRET[:20]
 FEED_KEY = os.environ.get('MT5_FEED_KEY', '')
-latest_gold = {'bars': None, 'received': 0, 'tick_time': 0}
+latest_gold = {'bars': None, 'received': 0, 'tick_time': 0, 'account': None, 'terminal_connected': False, 'account_received': 0}
 
 class DashboardHandler(BaseHTTPRequestHandler):
     def do_POST(self):
@@ -41,6 +41,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 if len(bars) < 52 or len(bars) > 200 or any(not all(k in bar for k in ('open','high','low','close')) for bar in bars):
                     self.send_error(400)
                     return
+                account = data.get('account')
+                if account and isinstance(account.get('balance'), (int, float)) and account.get('currency'):
+                    latest_gold.update({'account': {'balance': account['balance'], 'currency': str(account['currency'])[:8]}, 'terminal_connected': True, 'account_received': time.time()})
                 latest_gold.update({'bars': bars, 'received': time.time(), 'tick_time': int(data.get('tick_time',0))})
                 self.send_response(200)
                 self.end_headers()
@@ -60,6 +63,14 @@ class DashboardHandler(BaseHTTPRequestHandler):
         Thread(target=process_update, args=(data,), daemon=True).start()
 
     def do_GET(self):
+        if self.path.split('?')[0] == '/api/status':
+            self.send_response(200)
+            self.send_header('Content-Type','application/json')
+            self.send_header('Cache-Control','no-store')
+            self.end_headers()
+            # Public endpoint exposes connection flags only, never private account balances.
+            self.wfile.write(json.dumps({'feed_fresh': bool(latest_gold['bars']) and time.time()-latest_gold['received'] < 180, 'account_connected': latest_gold['terminal_connected'] and time.time()-latest_gold['account_received'] < 180, 'execution': 'OFF'}).encode())
+            return
         if self.path.split('?')[0] not in ('/', '/health'):
             self.send_error(404)
             return
