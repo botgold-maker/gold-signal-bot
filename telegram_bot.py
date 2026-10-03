@@ -93,7 +93,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
             self.send_header('Cache-Control','no-store')
             self.end_headers()
             # Public endpoint exposes connection flags only, never private account balances.
-            self.wfile.write(json.dumps({'feed_fresh': bool(latest_gold['bars']) and time.time()-latest_gold['received'] < 180, 'account_connected': latest_gold['terminal_connected'] and time.time()-latest_gold['account_received'] < 180, 'execution': 'OFF'}).encode())
+            self.wfile.write(json.dumps({'feed_fresh': bool(latest_gold['bars']) and time.time()-latest_gold['received'] < 180 and time.time()-latest_gold['tick_time'] < 3600, 'account_connected': latest_gold['terminal_connected'] and time.time()-latest_gold['account_received'] < 180, 'execution': 'OFF'}).encode())
             return
         if self.path.split('?')[0] not in ('/', '/health'):
             self.send_error(404)
@@ -146,7 +146,7 @@ def handle(action):
         if not enabled:
             return "Paper signals paused. Tap Start paper signals first."
         try:
-            if not latest_gold['bars'] or time.time() - latest_gold['received'] > 180:
+            if not latest_gold['bars'] or time.time() - latest_gold['received'] > 180 or time.time() - latest_gold['tick_time'] > 3600:
                 return 'MT5 gold feed unavailable or stale. No signal generated.'
             df = pd.DataFrame(latest_gold['bars'])
             return '📊 MT5 demo paper signal: ' + str(signal(df))
