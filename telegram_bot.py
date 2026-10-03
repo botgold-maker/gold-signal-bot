@@ -69,7 +69,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
             try:
                 fields = dict(parse_qsl(raw, keep_blank_values=True))
                 supplied = fields.pop('hash', '')
-                check = '\\n'.join(k+'='+v for k,v in sorted(fields.items()))
+                check = '\n'.join(k+'='+v for k,v in sorted(fields.items()))
                 secret = hmac.new(b'WebAppData', TOKEN.encode(), hashlib.sha256).digest()
                 expected = hmac.new(secret, check.encode(), hashlib.sha256).hexdigest()
                 user = json.loads(fields.get('user', '{}'))
