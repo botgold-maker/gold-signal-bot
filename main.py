@@ -62,7 +62,7 @@ def fetch():
     if ws is None:
         raise RuntimeError('Deriv public feed unavailable (' + '; '.join(failures) + '); no signal generated')
     try:
-        assets = deriv_request(ws, {'active_symbols': 'brief', 'product_type': 'basic'})
+        assets = deriv_request(ws, {'active_symbols': 'brief'})
         matches = [item for item in assets.get('active_symbols', [])
                    if 'gold' in item.get('display_name', '').lower()
                    or item.get('symbol', '').lower() in ('frxxauusd', 'xauusd')]
