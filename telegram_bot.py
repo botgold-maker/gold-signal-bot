@@ -195,5 +195,26 @@ while True:
     except Exception as exc:
         print('Webhook setup error:', type(exc).__name__, flush=True)
         time.sleep(10)
+# Notify the owner once when an observed live gold feed stops updating.
+# A stale feed can also mean a VPS/network failure, so do not claim a confirmed exchange close.
+def market_watch():
+    saw_live = False
+    notified = False
+    while True:
+        try:
+            now = time.time()
+            heartbeat = bool(latest_gold['bars']) and now - latest_gold['received'] < 180
+            tick_live = heartbeat and latest_gold['tick_time'] > 0 and 0 <= now - latest_gold['tick_time'] < 300
+            if tick_live:
+                saw_live = True
+                notified = False
+            elif saw_live and not notified and (not heartbeat or now - latest_gold['tick_time'] >= 300):
+                api('sendMessage', {'chat_id': OWNER, 'text': '🔔 Gold market update: XAUUSD live prices have stopped updating. The market may be closed, or the VPS/feed may be disconnected. Goldvvbot will not generate signals on stale prices.'})
+                notified = True
+        except Exception as exc:
+            print('Market watch error:', type(exc).__name__, flush=True)
+        time.sleep(60)
+
+Thread(target=market_watch, daemon=True).start()
 while True:
     time.sleep(3600)
