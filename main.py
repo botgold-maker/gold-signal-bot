@@ -3,6 +3,7 @@ import os
 import time
 import json
 import websocket
+from websocket import WebSocketBadStatusException
 import pandas as pd
 from risk import RiskManager
 
@@ -45,8 +46,12 @@ def deriv_request(ws, payload):
 
 def fetch():
     """Read public Deriv gold candles; token is not used for public market data."""
-    ws = websocket.create_connection(
-        'wss://ws.derivws.com/websockets/v3?app_id=' + DERIV_APP_ID, timeout=20)
+    try:
+        ws = websocket.create_connection(
+            'wss://ws.derivws.com/websockets/v3?app_id=' + DERIV_APP_ID,
+            timeout=20, origin='https://app.deriv.com')
+    except WebSocketBadStatusException as exc:
+        raise RuntimeError('Deriv connection rejected (HTTP ' + str(exc.status_code) + '). Check DERIV_APP_ID and server connectivity; no signal generated.') from None
     try:
         assets = deriv_request(ws, {'active_symbols': 'brief', 'product_type': 'basic'})
         matches = [item for item in assets.get('active_symbols', [])
