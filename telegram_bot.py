@@ -93,5 +93,5 @@ while True:
             cmd = str(msg.get("text", "")).split()[0].split("@")[0].lower().lstrip("/") if msg.get("text") else "menu"
             reply(chat, handle(cmd))
     except Exception as exc:
-        print("Telegram polling error:", type(exc).__name__, str(exc)[:160], flush=True)
+        print("Telegram polling error:", type(exc).__name__, "409 competing poller" if getattr(getattr(exc, "response", None), "status_code", None) == 409 else "request failed", flush=True)
         time.sleep(5)
