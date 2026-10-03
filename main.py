@@ -46,12 +46,21 @@ def deriv_request(ws, payload):
 
 def fetch():
     """Read public Deriv gold candles; token is not used for public market data."""
-    try:
-        ws = websocket.create_connection(
-            'wss://ws.derivws.com/websockets/v3?app_id=' + DERIV_APP_ID,
-            timeout=20, origin='https://app.deriv.com')
-    except WebSocketBadStatusException as exc:
-        raise RuntimeError('Deriv connection rejected (HTTP ' + str(exc.status_code) + '). Check DERIV_APP_ID and server connectivity; no signal generated.') from None
+    # Try the documented public endpoint first; retain legacy as fallback.
+    ws = None
+    failures = []
+    for endpoint in (
+        'wss://api.derivws.com/trading/v1/options/ws/public',
+        'wss://ws.derivws.com/websockets/v3?app_id=' + DERIV_APP_ID,
+    ):
+        try:
+            ws = websocket.create_connection(endpoint, timeout=15, origin='https://app.deriv.com')
+            break
+        except Exception as exc:
+            code = getattr(exc, 'status_code', None)
+            failures.append(type(exc).__name__ + ((' HTTP ' + str(code)) if code else ''))
+    if ws is None:
+        raise RuntimeError('Deriv public feed unavailable (' + '; '.join(failures) + '); no signal generated')
     try:
         assets = deriv_request(ws, {'active_symbols': 'brief', 'product_type': 'basic'})
         matches = [item for item in assets.get('active_symbols', [])
