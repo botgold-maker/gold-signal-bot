@@ -2,6 +2,9 @@
 import os
 import time
 import requests
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from threading import Thread
+from pathlib import Path
 from main import fetch, signal
 
 TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
@@ -10,11 +13,28 @@ BASE = "https://api.telegram.org/bot" + TOKEN + "/"
 if not TOKEN or not OWNER:
     raise SystemExit("Set TELEGRAM_BOT_TOKEN and TELEGRAM_OWNER_ID privately in Railway")
 
+DASHBOARD_URL = 'https://gold-telegram-production.up.railway.app/'
+
+class DashboardHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path.split('?')[0] not in ('/', '/health'):
+            self.send_error(404)
+            return
+        content = b'OK' if self.path.startswith('/health') else Path(__file__).with_name('dashboard.html').read_bytes()
+        self.send_response(200)
+        self.send_header('Content-Type', 'text/plain' if self.path.startswith('/health') else 'text/html; charset=utf-8')
+        self.send_header('Cache-Control', 'no-store')
+        self.end_headers()
+        self.wfile.write(content)
+
+Thread(target=lambda: ThreadingHTTPServer(('0.0.0.0', int(os.getenv('PORT', '8080'))), DashboardHandler).serve_forever(), daemon=True).start()
+
 enabled = False
 offset = None
 
 def menu():
     return {"inline_keyboard": [
+        [{"text": "💎 Open Goldvvbot Dashboard", "web_app": {"url": DASHBOARD_URL}}],
         [{"text": "▶️ Start paper signals", "callback_data": "start"},
          {"text": "⏸ Pause", "callback_data": "pause"}],
         [{"text": "📊 Gold signal", "callback_data": "signal"},
