@@ -2,6 +2,9 @@
 import os
 import time
 import requests
+import json
+import hashlib
+from threading import Thread
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
 from pathlib import Path
@@ -14,8 +17,23 @@ if not TOKEN or not OWNER:
     raise SystemExit("Set TELEGRAM_BOT_TOKEN and TELEGRAM_OWNER_ID privately in Railway")
 
 DASHBOARD_URL = 'https://gold-telegram-production.up.railway.app/'
+SECRET = hashlib.sha256(TOKEN.encode()).hexdigest()
+HOOK = '/updates/' + SECRET[:20]
 
 class DashboardHandler(BaseHTTPRequestHandler):
+    def do_POST(self):
+        if self.path != HOOK or self.headers.get('X-Telegram-Bot-Api-Secret-Token') != SECRET:
+            self.send_error(403)
+            return
+        n = int(self.headers.get('Content-Length', '0'))
+        if n < 1 or n > 65536:
+            self.send_error(400)
+            return
+        data = json.loads(self.rfile.read(n))
+        self.send_response(200)
+        self.end_headers()
+        Thread(target=process_update, args=(data,), daemon=True).start()
+
     def do_GET(self):
         if self.path.split('?')[0] not in ('/', '/health'):
             self.send_error(404)
@@ -86,32 +104,33 @@ try:
 except Exception as exc:
     print("Command menu setup error:", type(exc).__name__, flush=True)
 
+def process_update(update):
+    try:
+        callback = update.get('callback_query')
+        if callback:
+            if str(callback.get('from', {}).get('id', '')) != OWNER:
+                api('answerCallbackQuery', {'callback_query_id': callback['id'], 'text': 'Not authorized'})
+                return
+            api('answerCallbackQuery', {'callback_query_id': callback['id']})
+            chat = callback.get('message', {}).get('chat', {}).get('id')
+            if chat:
+                reply(chat, handle(callback.get('data', 'menu')))
+            return
+        msg = update.get('message') or {}
+        if str(msg.get('from', {}).get('id', '')) != OWNER:
+            return
+        cmd = str(msg.get('text', '')).split()[0].split('@')[0].lstrip('/').lower() if msg.get('text') else 'menu'
+        reply(msg['chat']['id'], handle(cmd))
+    except Exception as exc:
+        print('Update error:', type(exc).__name__, flush=True)
+
 while True:
     try:
-        params = {"timeout": 20}
-        if offset is not None:
-            params["offset"] = offset
-        response = requests.get(BASE + "getUpdates", params=params, timeout=30)
-        response.raise_for_status()
-        for update in response.json().get("result", []):
-            offset = update["update_id"] + 1
-            callback = update.get("callback_query")
-            if callback:
-                user_id = str((callback.get("from") or {}).get("id", ""))
-                if user_id != OWNER:
-                    api("answerCallbackQuery", {"callback_query_id": callback["id"], "text": "Not authorized", "show_alert": True})
-                    continue
-                api("answerCallbackQuery", {"callback_query_id": callback["id"]})
-                chat = str(((callback.get("message") or {}).get("chat") or {}).get("id", ""))
-                if chat:
-                    reply(chat, handle(callback.get("data", "menu")))
-                continue
-            msg = update.get("message") or {}
-            if str((msg.get("from") or {}).get("id", "")) != OWNER:
-                continue
-            chat = str((msg.get("chat") or {}).get("id", ""))
-            cmd = str(msg.get("text", "")).split()[0].split("@")[0].lower().lstrip("/") if msg.get("text") else "menu"
-            reply(chat, handle(cmd))
+        api('setWebhook', {'url': DASHBOARD_URL.rstrip('/') + HOOK, 'secret_token': SECRET, 'allowed_updates': ['message', 'callback_query']})
+        print('Webhook ready', flush=True)
+        break
     except Exception as exc:
-        print("Telegram polling error:", type(exc).__name__, "409 competing poller" if getattr(getattr(exc, "response", None), "status_code", None) == 409 else "request failed", flush=True)
-        time.sleep(5)
+        print('Webhook setup error:', type(exc).__name__, flush=True)
+        time.sleep(10)
+while True:
+    time.sleep(3600)
