@@ -5,6 +5,7 @@ import requests
 import json
 import hashlib
 import hmac
+from urllib.parse import parse_qsl
 import pandas as pd
 from datetime import datetime, timezone
 from threading import Thread
@@ -63,6 +64,29 @@ class DashboardHandler(BaseHTTPRequestHandler):
         Thread(target=process_update, args=(data,), daemon=True).start()
 
     def do_GET(self):
+        if self.path.split('?')[0] == '/api/account':
+            raw = self.headers.get('X-Telegram-Init-Data', '')
+            try:
+                fields = dict(parse_qsl(raw, keep_blank_values=True))
+                supplied = fields.pop('hash', '')
+                check = '\\n'.join(k+'='+v for k,v in sorted(fields.items()))
+                secret = hmac.new(b'WebAppData', TOKEN.encode(), hashlib.sha256).digest()
+                expected = hmac.new(secret, check.encode(), hashlib.sha256).hexdigest()
+                user = json.loads(fields.get('user', '{}'))
+                authorized = hmac.compare_digest(supplied, expected) and str(user.get('id')) == OWNER and abs(time.time()-int(fields.get('auth_date','0'))) < 86400
+            except Exception:
+                authorized = False
+            if not authorized:
+                self.send_error(403)
+                return
+            active = latest_gold['terminal_connected'] and time.time()-latest_gold['account_received'] < 180
+            response = {'connected': bool(active), 'account': latest_gold['account'] if active else None}
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Cache-Control', 'no-store')
+            self.end_headers()
+            self.wfile.write(json.dumps(response).encode())
+            return
         if self.path.split('?')[0] == '/api/status':
             self.send_response(200)
             self.send_header('Content-Type','application/json')
