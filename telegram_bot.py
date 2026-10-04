@@ -25,7 +25,7 @@ SECRET = hashlib.sha256(TOKEN.encode()).hexdigest()
 HOOK = '/updates/' + SECRET[:20]
 FEED_KEY = os.environ.get('MT5_FEED_KEY', '')
 CONTROL_KEY = os.environ.get('MT5_CONTROL_KEY', '')
-control = {'state': 'PAUSE', 'updated': time.time(), 'ack': 0}
+control = {'state': 'PAUSE', 'updated': time.time(), 'ack': 0, 'paper_state': 'PAUSE'}
 latest_gold = {'bars': None, 'received': 0, 'tick_time': 0, 'account': None, 'terminal_connected': False, 'account_received': 0}
 
 class DashboardHandler(BaseHTTPRequestHandler):
@@ -66,7 +66,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
                     latest_gold.update({'account': {'balance': account['balance'], 'currency': str(account['currency'])[:8]}, 'terminal_connected': True, 'account_received': time.time()})
                 latest_gold.update({'bars': bars, 'received': time.time(), 'tick_time': int(data.get('tick_time',0))})
                 self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
                 self.end_headers()
+                self.wfile.write(json.dumps({'paper_state':control['paper_state'], 'control_updated':control['updated']}).encode())
             except Exception:
                 self.send_error(400)
             return
@@ -168,9 +170,12 @@ def handle(action):
     global enabled
     if action == "start":
         enabled = True
+        control['paper_state'] = 'START'
+        control['updated'] = time.time()
         return "▶️ Paper signals enabled. MT5 demo trading remains separately locked."
     if action in ("stop", "pause"):
         enabled = False
+        control['paper_state'] = 'PAUSE'
         control["state"] = "PAUSE"
         control["updated"] = time.time()
         control["ack"] = 0
