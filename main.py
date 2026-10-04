@@ -27,6 +27,8 @@ def signal(df):
     required = ('open', 'high', 'low', 'close')
     if not isinstance(df, pd.DataFrame) or len(df) < 60 or any(k not in df.columns for k in required):
         return {'signal': 'WAIT', 'reason': 'Insufficient candles'}
+    if df[list(required)].isna().any().any():
+        return {'signal': 'WAIT', 'reason': 'Missing candle values'}
     df = indicators(df.copy())
     a, b = df.iloc[-2], df.iloc[-1]
     if pd.isna(b.rsi) or pd.isna(b.atr) or b.atr <= 0: return {'signal':'WAIT'}
