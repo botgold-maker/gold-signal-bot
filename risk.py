@@ -38,7 +38,7 @@ class RiskManager:
 
     def proposed_lots(self, entry, stop, dollars_per_price_unit_per_lot, min_lot=0.01, step=0.01):
         values = (entry, stop, dollars_per_price_unit_per_lot, min_lot, step)
-        if not all(math.isfinite(x) for x in values):
+        if not all(isinstance(x, (int, float)) and math.isfinite(x) for x in values):
             return None
         risk = self.budget()
         distance = abs(entry - stop)
@@ -48,7 +48,7 @@ class RiskManager:
         return lots if lots >= min_lot and lots * distance * dollars_per_price_unit_per_lot <= risk + 1e-9 else None
 
     def record_closed_pnl(self, pnl, now=None):
-        if not math.isfinite(pnl):
+        if not isinstance(pnl, (int, float)) or not math.isfinite(pnl):
             raise ValueError("P&L must be finite")
         self.rollover(now)
         self.balance += pnl
