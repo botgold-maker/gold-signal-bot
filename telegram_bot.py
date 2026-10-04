@@ -65,6 +65,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 if account and isinstance(account.get('balance'), (int, float)) and account.get('currency'):
                     latest_gold.update({'account': {'balance': account['balance'], 'currency': str(account['currency'])[:8]}, 'terminal_connected': True, 'account_received': time.time()})
                 latest_gold.update({'bars': bars, 'received': time.time(), 'tick_time': int(data.get('tick_time',0))})
+                if data.get('demo_ack_updated') == control['updated'] and control['state'] == 'START_DEMO':
+                    control['ack'] = time.time()
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
