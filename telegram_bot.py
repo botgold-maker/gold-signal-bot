@@ -147,9 +147,9 @@ offset = None
 def menu():
     return {"inline_keyboard": [
         [{"text": "💎 Open Goldvvbot Dashboard", "web_app": {"url": DASHBOARD_URL}}],
-        [{"text": "▶️ Start paper signals", "callback_data": "start"},
+        [{"text": "▶️ Start auto demo", "callback_data": "start"},
          {"text": "⏸ Pause", "callback_data": "pause"}],
-        [{"text": "🧪 Start MT5 demo", "callback_data": "demo_start"},
+        [{"text": "🧪 Restart MT5 demo", "callback_data": "demo_start"},
          {"text": "🛡 Demo control status", "callback_data": "demo_status"}],
         [{"text": "📊 Gold signal", "callback_data": "signal"},
          {"text": "📡 Status", "callback_data": "status"}],
@@ -197,8 +197,10 @@ def handle(action):
     if action == "start":
         enabled = True
         control['paper_state'] = 'START'
+        control['state'] = 'START_DEMO'
         control['updated'] = time.time()
-        return "▶️ Paper signals enabled.\n\n" + live_summary()
+        control['ack'] = 0
+        return "▶️ Automatic DEMO trading requested. Scanning begins on the next VPS cycle; trades require valid signals and risk checks.\n\n" + live_summary()
     if action in ("stop", "pause"):
         enabled = False
         control['paper_state'] = 'PAUSE'
@@ -207,6 +209,8 @@ def handle(action):
         control["ack"] = 0
         return "⏸ Paper signals paused. MT5 demo pause requested; existing trades are not closed."
     if action == "demo_start":
+        enabled = True
+        control['paper_state'] = 'START'
         control['state'] = 'START_DEMO'
         control['updated'] = time.time()
         control['ack'] = 0
@@ -232,7 +236,7 @@ def handle(action):
 try:
     api("setMyCommands", {"commands": [
         {"command": "menu", "description": "Open tap control panel"},
-        {"command": "start", "description": "Start paper signals"},
+        {"command": "start", "description": "Start automatic demo trading"},
         {"command": "pause", "description": "Pause paper signals"},
         {"command": "status", "description": "Check bot status"},
         {"command": "signal", "description": "Check gold signal"},
