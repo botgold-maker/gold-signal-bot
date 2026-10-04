@@ -114,7 +114,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 self.send_error(403)
                 return
             active = latest_gold['terminal_connected'] and time.time()-latest_gold['account_received'] < 180
-            response = {'connected': bool(active), 'account': latest_gold['account'] if active else None}
+            response = {'connected': bool(active), 'account': latest_gold['account'] if active else None, 'demo_control': control['state'], 'vps_acknowledged': bool(control['state'] == 'START_DEMO' and control['ack'] >= control['updated']), 'paper_signals': bool(enabled)}
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
             self.send_header('Cache-Control', 'no-store')
