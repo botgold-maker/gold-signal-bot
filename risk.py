@@ -10,7 +10,7 @@ MAX_CONSECUTIVE_LOSSES = 2
 
 class RiskManager:
     def __init__(self, balance=STARTING_BALANCE):
-        if not math.isfinite(balance) or balance <= 0:
+        if not isinstance(balance, (int, float)) or not math.isfinite(balance) or balance <= 0:
             raise ValueError("Balance must be finite and positive")
         self.balance = balance
         self.day = None
