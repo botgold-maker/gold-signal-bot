@@ -182,14 +182,14 @@ def live_summary():
         signal_line = direction + (f' | Gold: {price:,.2f}' if price is not None else '')
     except Exception:
         signal_line = 'Unavailable'
-    return ('📊 GOLD BOT LIVE OVERVIEW\\n'
-            + 'Paper signals: ' + ('ON' if enabled else 'OFF') + '\\n'
-            + 'Demo control: ' + demo + '\\n'
-            + 'Market feed: ' + ('FRESH' if feed else 'WAITING / STALE') + '\\n'
-            + 'MT5 balance: ' + balance + '\\n'
-            + 'Gold signal: ' + signal_line + '\\n'
-            + 'Open trades / P&L: Not reported by current feed\\n'
-            + 'Risk setting: 0.5% per trade; verify executor safeguards\\n'
+    return ('📊 GOLD BOT LIVE OVERVIEW\n'
+            + 'Paper signals: ' + ('ON' if enabled else 'OFF') + '\n'
+            + 'Demo control: ' + demo + '\n'
+            + 'Market feed: ' + ('FRESH' if feed else 'WAITING / STALE') + '\n'
+            + 'MT5 balance: ' + balance + '\n'
+            + 'Gold signal: ' + signal_line + '\n'
+            + 'Open trades / P&L: Not reported by current feed\n'
+            + 'Risk setting: 0.5% per trade; verify executor safeguards\n'
             + 'Note: VPS acknowledgement is not proof an order executed.')
 
 def handle(action):
@@ -198,7 +198,7 @@ def handle(action):
         enabled = True
         control['paper_state'] = 'START'
         control['updated'] = time.time()
-        return "▶️ Paper signals enabled.\\n\\n" + live_summary()
+        return "▶️ Paper signals enabled.\n\n" + live_summary()
     if action in ("stop", "pause"):
         enabled = False
         control['paper_state'] = 'PAUSE'
@@ -210,7 +210,7 @@ def handle(action):
         control['state'] = 'START_DEMO'
         control['updated'] = time.time()
         control['ack'] = 0
-        return '🧪 Demo start requested.\\n\\n' + live_summary()
+        return '🧪 Demo start requested.\n\n' + live_summary()
     if action == "demo_status":
         return 'MT5 demo control: ' + control['state'] + ('. VPS acknowledged.' if control['ack'] >= control['updated'] else '. Awaiting VPS acknowledgement.')
     if action == "status":
@@ -226,7 +226,7 @@ def handle(action):
             return '📊 Gold signal: ' + str(raw.get('signal','WAIT')) + ((' | Price: ' + format(float(raw['price']), ',.2f')) if raw.get('price') is not None else '')
         except Exception as exc:
             return "Market signal unavailable: " + str(exc)[:200]
-    return live_summary() + "\\n\\nChoose a button below."
+    return live_summary() + "\n\nChoose a button below."
 
 # Make slash commands visible in Telegram's command picker.
 try:
