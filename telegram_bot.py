@@ -168,13 +168,37 @@ def api(method, payload):
 def reply(chat, message):
     api("sendMessage", {"chat_id": chat, "text": message, "reply_markup": menu()})
 
+def live_summary():
+    now = time.time()
+    feed = bool(latest_gold['bars']) and now-latest_gold['received'] < 180 and 0 <= now-latest_gold['tick_time'] < 300
+    account = latest_gold['account'] if now-latest_gold['account_received'] < 180 else None
+    balance = (f"{account['currency']} {float(account['balance']):,.2f}" if account else 'Waiting for fresh MT5 data')
+    ack = control['state'] == 'START_DEMO' and control['ack'] >= control['updated']
+    demo = ('START acknowledged by VPS' if ack else 'START requested; awaiting VPS' if control['state']=='START_DEMO' else 'PAUSED')
+    try:
+        raw = signal(pd.DataFrame(latest_gold['bars'])) if feed else None
+        direction = str(raw.get('signal', 'WAIT')) if isinstance(raw, dict) else 'Unavailable'
+        price = float(raw['price']) if isinstance(raw, dict) and raw.get('price') is not None else None
+        signal_line = direction + (f' | Gold: {price:,.2f}' if price is not None else '')
+    except Exception:
+        signal_line = 'Unavailable'
+    return ('📊 GOLD BOT LIVE OVERVIEW\\n'
+            + 'Paper signals: ' + ('ON' if enabled else 'OFF') + '\\n'
+            + 'Demo control: ' + demo + '\\n'
+            + 'Market feed: ' + ('FRESH' if feed else 'WAITING / STALE') + '\\n'
+            + 'MT5 balance: ' + balance + '\\n'
+            + 'Gold signal: ' + signal_line + '\\n'
+            + 'Open trades / P&L: Not reported by current feed\\n'
+            + 'Risk setting: 0.5% per trade; verify executor safeguards\\n'
+            + 'Note: VPS acknowledgement is not proof an order executed.')
+
 def handle(action):
     global enabled
     if action == "start":
         enabled = True
         control['paper_state'] = 'START'
         control['updated'] = time.time()
-        return "▶️ Paper signals enabled. MT5 demo trading remains separately locked."
+        return "▶️ Paper signals enabled.\\n\\n" + live_summary()
     if action in ("stop", "pause"):
         enabled = False
         control['paper_state'] = 'PAUSE'
@@ -186,11 +210,11 @@ def handle(action):
         control['state'] = 'START_DEMO'
         control['updated'] = time.time()
         control['ack'] = 0
-        return 'Demo start requested. Waiting for VPS acknowledgement; MT5 must independently allow demo trading.'
+        return '🧪 Demo start requested.\\n\\n' + live_summary()
     if action == "demo_status":
         return 'MT5 demo control: ' + control['state'] + ('. VPS acknowledged.' if control['ack'] >= control['updated'] else '. Awaiting VPS acknowledgement.')
     if action == "status":
-        return '📡 Bot online. Paper signals: ' + ('ON' if enabled else 'OFF') + '. MT5 feed: ' + ('FRESH' if latest_gold['bars'] and time.time()-latest_gold['received'] < 180 else 'WAITING') + '. Auto trading: OFF.'
+        return live_summary()
     if action == "signal":
         if not enabled:
             return "Paper signals paused. Tap Start paper signals first."
@@ -198,10 +222,11 @@ def handle(action):
             if not latest_gold['bars'] or time.time() - latest_gold['received'] > 180 or time.time() - latest_gold['tick_time'] > 3600:
                 return 'MT5 gold feed unavailable or stale. No signal generated.'
             df = pd.DataFrame(latest_gold['bars'])
-            return '📊 MT5 demo paper signal: ' + str(signal(df))
+            raw = signal(df)
+            return '📊 Gold signal: ' + str(raw.get('signal','WAIT')) + ((' | Price: ' + format(float(raw['price']), ',.2f')) if raw.get('price') is not None else '')
         except Exception as exc:
             return "Market signal unavailable: " + str(exc)[:200]
-    return "Gold bot control panel — PAPER ONLY. Choose a button below."
+    return live_summary() + "\\n\\nChoose a button below."
 
 # Make slash commands visible in Telegram's command picker.
 try:
