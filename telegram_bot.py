@@ -68,7 +68,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
-                self.wfile.write(json.dumps({'paper_state':control['paper_state'], 'control_updated':control['updated']}).encode())
+                self.wfile.write(json.dumps({'paper_state':control['paper_state'], 'demo_state':control['state'], 'control_updated':control['updated']}).encode())
             except Exception:
                 self.send_error(400)
             return
