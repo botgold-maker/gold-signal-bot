@@ -40,7 +40,11 @@ class DashboardHandler(BaseHTTPRequestHandler):
                     self.send_error(400)
                     return
                 payload = json.loads(self.rfile.read(n))
-                if payload.get('state') == control['state'] and payload.get('updated') == control['updated']:
+                try:
+                    ack_matches = abs(float(payload.get('updated')) - float(control['updated'])) < 1.0
+                except (TypeError, ValueError):
+                    ack_matches = False
+                if payload.get('state') == control['state'] and ack_matches:
                     control['ack'] = time.time()
                 self.send_response(200)
                 self.end_headers()
