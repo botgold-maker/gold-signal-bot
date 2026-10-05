@@ -68,7 +68,14 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 if isinstance(trading, dict):
                     latest_gold['trading'] = trading
                 latest_gold.update({'bars': bars, 'received': time.time(), 'tick_time': int(data.get('tick_time',0))})
-                if data.get('demo_ack_updated') == control['updated'] and control['state'] == 'START_DEMO':
+                ack_updated = data.get('demo_ack_updated')
+                # JSON/clock serialization can introduce tiny float differences.
+                # Accept the ack only for the current START command, within a small timestamp tolerance.
+                try:
+                    ack_matches = abs(float(ack_updated) - float(control['updated'])) < 1.0
+                except (TypeError, ValueError):
+                    ack_matches = False
+                if ack_matches and control['state'] == 'START_DEMO':
                     control['ack'] = time.time()
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
