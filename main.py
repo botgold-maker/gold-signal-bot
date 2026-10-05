@@ -27,14 +27,21 @@ def signal(df):
     df = indicators(df.copy())
     a, b = df.iloc[-2], df.iloc[-1]
     if pd.isna(b.rsi) or pd.isna(b.atr): return {'signal':'WAIT'}
-    trend_up = b.ema20 > b.ema50 and b.close > b.ema20
-    trend_down = b.ema20 < b.ema50 and b.close < b.ema20
-    rising = b.close > a.close
-    falling = b.close < a.close
-    direction = 'BUY' if trend_up and rising and 52 <= b.rsi <= 68 else 'SELL' if trend_down and falling and 32 <= b.rsi <= 48 else 'WAIT'
+    # Selective entry: require meaningful EMA separation and a confirmed candle.
+    # This reduces BUY/SELL whipsaw when gold is chopping around the averages.
+    ema_gap = abs(b.ema20 - b.ema50)
+    strong_trend = ema_gap >= 0.20 * b.atr
+    bullish_candle = b.close > a.close and b.close > b.ema20 and a.close >= a.ema20
+    bearish_candle = b.close < a.close and b.close < b.ema20 and a.close <= a.ema20
+    trend_up = strong_trend and b.ema20 > b.ema50
+    trend_down = strong_trend and b.ema20 < b.ema50
+    direction = ('BUY' if trend_up and bullish_candle and 55 <= b.rsi <= 67
+                 else 'SELL' if trend_down and bearish_candle and 33 <= b.rsi <= 45
+                 else 'WAIT')
     if direction == 'WAIT': return {'signal':'WAIT', 'price':round(b.close,2)}
-    stop = b.close - 1.5*b.atr if direction == 'BUY' else b.close + 1.5*b.atr
-    target = b.close + 2.25*b.atr if direction == 'BUY' else b.close - 2.25*b.atr
+    # Keep stops volatility-aware, but do not widen them simply because balance is larger.
+    stop = b.close - 1.25*b.atr if direction == 'BUY' else b.close + 1.25*b.atr
+    target = b.close + 2.0*b.atr if direction == 'BUY' else b.close - 2.0*b.atr
     return {'signal':direction, 'price':round(b.close,2), 'stop':round(stop,2), 'target':round(target,2), 'rsi':round(b.rsi,1), 'mode':'PAPER_ONLY'}
 
 def deriv_request(ws, payload):
