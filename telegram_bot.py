@@ -26,7 +26,7 @@ HOOK = '/updates/' + SECRET[:20]
 FEED_KEY = os.environ.get('MT5_FEED_KEY', '')
 CONTROL_KEY = os.environ.get('MT5_CONTROL_KEY', '')
 control = {'state': 'PAUSE', 'updated': time.time(), 'ack': 0, 'paper_state': 'PAUSE'}
-latest_gold = {'bars': None, 'received': 0, 'tick_time': 0, 'account': None, 'terminal_connected': False, 'account_received': 0}
+latest_gold = {'bars': None, 'received': 0, 'tick_time': 0, 'account': None, 'terminal_connected': False, 'account_received': 0, 'trading': None}
 
 class DashboardHandler(BaseHTTPRequestHandler):
     def do_POST(self):
@@ -64,7 +64,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 account = data.get('account')
                 if account and isinstance(account.get('balance'), (int, float)) and account.get('currency'):
                     latest_gold.update({'account': {'balance': account['balance'], 'currency': str(account['currency'])[:8]}, 'terminal_connected': True, 'account_received': time.time()})
-                latest_gold.update({'bars': bars, 'received': time.time(), 'tick_time': int(data.get('tick_time',0))})
+                trading = data.get('trading')\n                if isinstance(trading, dict): latest_gold['trading'] = trading\n                latest_gold.update({'bars': bars, 'received': time.time(), 'tick_time': int(data.get('tick_time',0))})
                 if data.get('demo_ack_updated') == control['updated'] and control['state'] == 'START_DEMO':
                     control['ack'] = time.time()
                 self.send_response(200)
@@ -114,7 +114,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 self.send_error(403)
                 return
             active = latest_gold['terminal_connected'] and time.time()-latest_gold['account_received'] < 180
-            response = {'connected': bool(active), 'account': latest_gold['account'] if active else None, 'demo_control': control['state'], 'vps_acknowledged': bool(control['state'] == 'START_DEMO' and control['ack'] >= control['updated']), 'paper_signals': bool(enabled)}
+            response = {'connected': bool(active), 'account': latest_gold['account'] if active else None, 'demo_control': control['state'], 'vps_acknowledged': bool(control['state'] == 'START_DEMO' and control['ack'] >= control['updated']), 'paper_signals': bool(enabled), 'trading': latest_gold['trading'] if active else None}
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
             self.send_header('Cache-Control', 'no-store')
@@ -188,7 +188,7 @@ def live_summary():
             + 'Market feed: ' + ('FRESH' if feed else 'WAITING / STALE') + '\n'
             + 'MT5 balance: ' + balance + '\n'
             + 'Gold signal: ' + signal_line + '\n'
-            + 'Open trades / P&L: Not reported by current feed\n'
+            + 'Open trades / P&L: ' + ((str(latest_gold['trading'].get('open_count',0)) + ' / ' + format(float(latest_gold['trading'].get('floating_pl',0)), '+,.2f')) if latest_gold.get('trading') else 'Waiting for MT5 telemetry') + '\n'
             + 'Risk setting: 0.5% per trade; verify executor safeguards\n'
             + 'Note: VPS acknowledgement is not proof an order executed.')
 
