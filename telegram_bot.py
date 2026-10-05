@@ -64,7 +64,10 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 account = data.get('account')
                 if account and isinstance(account.get('balance'), (int, float)) and account.get('currency'):
                     latest_gold.update({'account': {'balance': account['balance'], 'currency': str(account['currency'])[:8]}, 'terminal_connected': True, 'account_received': time.time()})
-                trading = data.get('trading')\n                if isinstance(trading, dict): latest_gold['trading'] = trading\n                latest_gold.update({'bars': bars, 'received': time.time(), 'tick_time': int(data.get('tick_time',0))})
+                trading = data.get('trading')
+                if isinstance(trading, dict):
+                    latest_gold['trading'] = trading
+                latest_gold.update({'bars': bars, 'received': time.time(), 'tick_time': int(data.get('tick_time',0))})
                 if data.get('demo_ack_updated') == control['updated'] and control['state'] == 'START_DEMO':
                     control['ack'] = time.time()
                 self.send_response(200)
