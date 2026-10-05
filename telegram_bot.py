@@ -164,7 +164,7 @@ def menu():
     return {"inline_keyboard": [
         [{"text": "💎 Open Goldvvbot Dashboard", "web_app": {"url": DASHBOARD_URL}}],
         [{"text": "▶️ Start auto demo", "callback_data": "start"},
-         {"text": "⏸ Pause", "callback_data": "pause"}],
+         {"text": "🛑 Stop & close", "callback_data": "pause"}],
         [{"text": "🧪 Restart MT5 demo", "callback_data": "demo_start"},
          {"text": "🛡 Demo control status", "callback_data": "demo_status"}],
         [{"text": "📊 Gold signal", "callback_data": "signal"},
@@ -220,10 +220,10 @@ def handle(action):
     if action in ("stop", "pause"):
         enabled = False
         control['paper_state'] = 'PAUSE'
-        control["state"] = "PAUSE"
+        control["state"] = "STOP_DEMO"
         control["updated"] = time.time()
         control["ack"] = 0
-        return "⏸ Paper signals paused. MT5 demo pause requested; existing trades are not closed."
+        return "🛑 STOP requested. New trades are disabled and the VPS will close all Goldvvbot demo positions on its next cycle."
     if action == "demo_start":
         enabled = True
         control['paper_state'] = 'START'
@@ -253,10 +253,10 @@ try:
     api("setMyCommands", {"commands": [
         {"command": "menu", "description": "Open tap control panel"},
         {"command": "start", "description": "Start automatic demo trading"},
-        {"command": "pause", "description": "Pause paper signals"},
+        {"command": "pause", "description": "Stop bot and close demo trades"},
         {"command": "status", "description": "Check bot status"},
         {"command": "signal", "description": "Check gold signal"},
-        {"command": "stop", "description": "Stop paper signals"},
+        {"command": "stop", "description": "Stop bot and close demo trades"},
         {"command": "demo_status", "description": "Check VPS demo connection"},
         {"command": "demo_start", "description": "Request MT5 demo start"}
     ]})
