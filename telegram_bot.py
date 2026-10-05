@@ -46,7 +46,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
                     ack_matches = False
                 if payload.get('state') == control['state'] and ack_matches:
                     control['ack'] = time.time()
-                self.send_response(200)
+                    self.send_response(200)
+                else:
+                    self.send_response(409)
                 self.end_headers()
             except Exception:
                 self.send_error(400)
