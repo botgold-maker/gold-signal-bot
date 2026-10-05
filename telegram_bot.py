@@ -31,7 +31,7 @@ latest_gold = {'bars': None, 'received': 0, 'tick_time': 0, 'account': None, 'te
 class DashboardHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         if self.path == '/mt5/control/ack':
-            if not CONTROL_KEY or not hmac.compare_digest(self.headers.get('X-Control-Key', ''), CONTROL_KEY):
+            if not FEED_KEY or not hmac.compare_digest(self.headers.get('X-Feed-Key', ''), FEED_KEY):
                 self.send_error(403)
                 return
             try:
