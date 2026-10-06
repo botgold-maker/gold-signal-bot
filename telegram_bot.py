@@ -162,15 +162,11 @@ offset = None
 
 def menu():
     return {"inline_keyboard": [
-        [{"text": "💎 Open Goldvvbot Dashboard", "web_app": {"url": DASHBOARD_URL}}],
-        [{"text": "▶️ Start auto demo", "callback_data": "start"},
-         {"text": "🛑 Stop & close", "callback_data": "pause"}],
-        [{"text": "🧪 Restart MT5 demo", "callback_data": "demo_start"},
-         {"text": "🛡 Demo control status", "callback_data": "demo_status"}],
-        [{"text": "📊 Gold signal", "callback_data": "signal"},
-         {"text": "📡 Status", "callback_data": "status"}],
-        [{"text": "🛑 Stop paper signals", "callback_data": "stop"},
-         {"text": "🔄 Refresh menu", "callback_data": "menu"}]
+        [{"text": "💎 Dashboard", "web_app": {"url": DASHBOARD_URL}}],
+        [{"text": "▶️ Start", "callback_data": "start"},
+         {"text": "🛑 Stop", "callback_data": "pause"}],
+        [{"text": "📊 Signal", "callback_data": "signal"},
+         {"text": "🔄 Status", "callback_data": "status"}]
     ]}
 
 def api(method, payload):
@@ -198,15 +194,11 @@ def live_summary():
         signal_line = direction + (f' | Gold: {price:,.2f}' if price is not None else '')
     except Exception:
         signal_line = 'Unavailable'
-    return ('📊 GOLD BOT LIVE OVERVIEW\n'
-            + 'Paper signals: ' + ('ON' if enabled else 'OFF') + '\n'
-            + 'Demo control: ' + demo + '\n'
-            + 'Market feed: ' + ('FRESH' if feed else 'WAITING / STALE') + '\n'
-            + 'MT5 balance: ' + balance + '\n'
-            + 'Gold signal: ' + signal_line + '\n'
-            + 'Open trades / P&L: ' + ((str(latest_gold['trading'].get('open_count',0)) + ' / ' + format(float(latest_gold['trading'].get('floating_pl',0)), '+,.2f')) if latest_gold.get('trading') else 'Waiting for MT5 telemetry') + '\n'
-            + 'Risk setting: 0.5% per trade; verify executor safeguards\n'
-            + 'Note: VPS acknowledgement is not proof an order executed.')
+    return ('💎 Goldvvbot  •  ' + ('RUNNING' if control['state']=='START_DEMO' else 'PAUSED') + '\n\n'
+            + '📡 Feed: ' + ('FRESH' if feed else 'STALE') + '\n'
+            + '💰 Balance: ' + balance + '\n'
+            + '📊 Signal: ' + signal_line + '\n'
+            + '📈 Trades: ' + ((str(latest_gold['trading'].get('open_count',0)) + '  •  P/L ' + format(float(latest_gold['trading'].get('floating_pl',0)), '+,.2f')) if latest_gold.get('trading') else '0'))
 
 def handle(action):
     global enabled
@@ -216,21 +208,21 @@ def handle(action):
         control['state'] = 'START_DEMO'
         control['updated'] = time.time()
         control['ack'] = 0
-        return "▶️ Automatic DEMO trading requested. Scanning begins on the next VPS cycle; trades require valid signals and risk checks.\n\n" + live_summary()
+        return "▶️ Goldvvbot started.\n\n" + live_summary()
     if action in ("stop", "pause"):
         enabled = False
         control['paper_state'] = 'PAUSE'
         control["state"] = "STOP_DEMO"
         control["updated"] = time.time()
         control["ack"] = 0
-        return "🛑 STOP requested. New trades are disabled and the VPS will close all Goldvvbot demo positions on its next cycle."
+        return "🛑 Goldvvbot stopped."
     if action == "demo_start":
         enabled = True
         control['paper_state'] = 'START'
         control['state'] = 'START_DEMO'
         control['updated'] = time.time()
         control['ack'] = 0
-        return '🧪 Demo start requested.\n\n' + live_summary()
+        return '▶️ Goldvvbot started.\n\n' + live_summary()
     if action == "demo_status":
         return 'MT5 demo control: ' + control['state'] + ('. VPS acknowledged.' if control['ack'] >= control['updated'] else '. Awaiting VPS acknowledgement.')
     if action == "status":
