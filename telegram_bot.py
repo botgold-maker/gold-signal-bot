@@ -235,7 +235,16 @@ def handle(action):
                 return 'MT5 gold feed unavailable or stale. No signal generated.'
             df = pd.DataFrame(latest_gold['bars'])
             raw = signal(df)
-            return '📊 Gold signal: ' + str(raw.get('signal','WAIT')) + ((' | Price: ' + format(float(raw['price']), ',.2f')) if raw.get('price') is not None else '')
+            side = str(raw.get('signal','WAIT'))
+            if side not in ('BUY','SELL'):
+                return '📊 Gold setup: WAIT\\nNo qualifying setup right now.'
+            lines = ['📊 Gold setup ready', 'Direction: ' + side]
+            if raw.get('price') is not None: lines.append('Entry reference: ' + format(float(raw['price']), ',.2f'))
+            if raw.get('stop') is not None: lines.append('SL: ' + format(float(raw['stop']), ',.2f'))
+            if raw.get('target') is not None: lines.append('TP: ' + format(float(raw['target']), ',.2f'))
+            if raw.get('rsi') is not None: lines.append('RSI: ' + str(raw['rsi']))
+            lines.append('Live order: MANUAL in MT5')
+            return '\\n'.join(lines)
         except Exception as exc:
             return "Market signal unavailable: " + str(exc)[:200]
     return live_summary() + "\n\nChoose a button below."
@@ -244,8 +253,8 @@ def handle(action):
 try:
     api("setMyCommands", {"commands": [
         {"command": "menu", "description": "Open tap control panel"},
-        {"command": "start", "description": "Start automatic demo trading"},
-        {"command": "pause", "description": "Stop bot and close demo trades"},
+        {"command": "start", "description": "Start Gold setup scanning"},
+        {"command": "pause", "description": "Pause Gold setup scanning"},
         {"command": "status", "description": "Check bot status"},
         {"command": "signal", "description": "Check gold signal"},
         {"command": "stop", "description": "Stop bot and close demo trades"},
