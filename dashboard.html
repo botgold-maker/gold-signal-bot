@@ -1,31 +1,36 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"><title>Goldvvbot</title><script src="https://telegram.org/js/telegram-web-app.js"></script>
-<style>*{box-sizing:border-box}body{margin:0;background:#071022;color:#f6f8ff;font-family:system-ui,-apple-system,sans-serif;min-height:100vh;padding:22px 16px 34px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}.brand{font-size:25px;font-weight:850}.dot{color:#35d6a3}.badge,.signal{border-radius:999px;padding:6px 10px;font-size:11px;font-weight:800}.badge{background:#182947;color:#b9cae9}.card{background:#0e1930;border:1px solid #223454;border-radius:22px;padding:20px;margin-bottom:14px}.hero{background:linear-gradient(135deg,#1166e8,#0b3eaa);border:0}.label{color:#9db0d0;font-size:12px}.balance{font-size:35px;font-weight:850;margin:8px 0}.statusline{display:flex;gap:8px;align-items:center;margin-top:8px}.led{width:9px;height:9px;border-radius:50%;background:#8793a8}.ok{background:#35d6a3}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.tile{background:#0e1930;border:1px solid #223454;border-radius:18px;padding:15px;min-height:96px}.value{font-size:17px;font-weight:800;margin-top:9px;overflow-wrap:anywhere}.section{font-size:17px;font-weight:800;margin:20px 2px 10px}.signal{display:inline-block;background:#23314a;color:#d8e3f6;margin-top:9px}.quick{background:#493b18;color:#ffd77a}.strong{background:#153e35;color:#76efc3}.controls{display:grid;grid-template-columns:1fr 1fr;gap:10px}.btn{border:0;border-radius:16px;min-height:52px;font-size:15px;font-weight:800;color:white;background:#1469ee}.stop{background:#40202a}.secondary{background:#182947}.wide{grid-column:1/-1}.foot{color:#8294b5;font-size:11px;line-height:1.5;margin:16px 4px}</style></head>
-<body><div class="top"><div><div class="label">MT5 Gold demo</div><div class="brand">Goldvvbot<span class="dot">.</span></div></div><span class="badge" id="mode">CHECKING</span></div>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"><title>Goldvvbot Live</title><script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>*{box-sizing:border-box}body{margin:0;background:#071022;color:#f6f8ff;font-family:system-ui,-apple-system,sans-serif;min-height:100vh;padding:18px 14px 32px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.brand{font-size:25px;font-weight:850}.dot{color:#35d6a3}.badge,.pill{border-radius:999px;padding:6px 10px;font-size:11px;font-weight:800}.badge{background:#182947;color:#b9cae9}.card,.tile{background:#0e1930;border:1px solid #223454;border-radius:20px;padding:17px;margin-bottom:12px}.hero{background:linear-gradient(135deg,#1166e8,#0b3eaa);border:0}.label{color:#9db0d0;font-size:11px}.balance{font-size:34px;font-weight:850;margin:6px 0}.statusline{display:flex;gap:8px;align-items:center}.led{width:9px;height:9px;border-radius:50%;background:#8793a8}.ok{background:#35d6a3}.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.tile{margin:0;min-height:92px}.value{font-size:17px;font-weight:800;margin-top:8px;overflow-wrap:anywhere}.section{font-size:16px;font-weight:800;margin:17px 2px 9px}.pill{display:inline-block;background:#23314a;color:#d8e3f6;margin-top:8px}.buy{background:#153e35;color:#76efc3}.sell{background:#4a2028;color:#ff9fac}.controls{display:grid;grid-template-columns:1fr 1fr;gap:9px}.btn{border:0;border-radius:15px;min-height:50px;font-size:15px;font-weight:800;color:white;background:#1469ee}.stop{background:#40202a}.secondary{background:#182947}.wide{grid-column:1/-1}.foot{color:#8294b5;font-size:11px;line-height:1.5;margin:14px 4px}</style></head>
+<body><div class="top"><div><div class="label">MT5 • XAUUSD M5</div><div class="brand">Goldvvbot<span class="dot">.</span> Live</div></div><span class="badge" id="mode">CHECKING</span></div>
 <div class="card hero"><div class="label">ACCOUNT BALANCE</div><div class="balance" id="balance">Checking…</div><div class="statusline"><span class="led" id="connLed"></span><span id="connection">Connecting to MT5…</span></div></div>
-<div class="section">Live trading</div><div class="grid">
+<div class="section">Live monitor</div><div class="grid">
 <div class="tile"><div class="label">BOT</div><div class="value" id="bot">Checking…</div></div>
 <div class="tile"><div class="label">MARKET FEED</div><div class="value" id="feed">Checking…</div></div>
-<div class="tile"><div class="label">GOLD SIGNAL</div><div class="signal" id="signal">WAIT</div></div>
-<div class="tile"><div class="label">OPEN TRADES</div><div class="value" id="open">0</div><div class="label" id="pnl">P/L +0.00</div></div>
+<div class="tile"><div class="label">XAUUSD SIGNAL</div><div class="pill" id="signal">WAIT</div></div>
+<div class="tile"><div class="label">GOLD PRICE</div><div class="value" id="price">—</div></div>
+<div class="tile"><div class="label">OPEN TRADES</div><div class="value" id="open">0</div></div>
+<div class="tile"><div class="label">FLOATING P/L</div><div class="value" id="floating">+0.00</div></div>
 </div>
-<div class="section">Performance</div><div class="card"><div class="grid"><div><div class="label">RESULTS</div><div class="value" id="results">—</div></div><div><div class="label">FLOATING P/L</div><div class="value" id="floating">+0.00</div></div></div></div>
-<div class="section">Control center</div><div class="controls"><button class="btn" id="start">▶ Start</button><button class="btn stop" id="stop">■ Stop</button><button class="btn secondary wide" id="refresh">↻ Refresh live status</button></div>
-<div class="foot">Start requests demo trading on your VPS. The bot still requires its signal and risk checks before any order can open. Stop disables new demo entries. Confirm actual positions under Open Trades.</div>
+<div class="section">Current setup</div><div class="card"><div class="grid">
+<div><div class="label">ENTRY</div><div class="value" id="entry">—</div></div><div><div class="label">LOT</div><div class="value" id="lot">—</div></div>
+<div><div class="label">STOP LOSS</div><div class="value" id="sl">—</div></div><div><div class="label">TAKE PROFIT</div><div class="value" id="tp">—</div></div>
+</div></div>
+<div class="section">Performance</div><div class="card"><div class="grid"><div><div class="label">RESULTS</div><div class="value" id="results">—</div></div><div><div class="label">LAST UPDATE</div><div class="value" id="updated">—</div></div></div></div>
+<div class="section">Control center</div><div class="controls"><button class="btn" id="start">▶ Start</button><button class="btn stop" id="stop">■ Stop</button><button class="btn secondary wide" id="refresh">↻ Refresh now</button></div>
+<div class="foot">Live monitoring uses the MT5 feed from your VPS. Start/Stop controls the demo execution path. Real-money order entry remains manual-confirm only.</div>
 <script>
-const tg=window.Telegram?.WebApp;tg?.ready();tg?.expand();
-const $=id=>document.getElementById(id);
-function money(v){const n=Number(v||0);return (n>=0?'+':'')+n.toFixed(2)}
-function load(){
- fetch('/api/account',{headers:{'X-Telegram-Init-Data':tg?.initData||''}}).then(r=>r.ok?r.json():Promise.reject()).then(a=>{
-  const active=a.demo_control==='START_DEMO';
-  $('bot').textContent=active?(a.vps_acknowledged?'RUNNING':'STARTING'):'PAUSED';
-  $('mode').textContent=active?'DEMO RUNNING':'DEMO PAUSED';
-  if(a.connected&&a.account){$('balance').textContent=new Intl.NumberFormat('en-US',{style:'currency',currency:a.account.currency}).format(a.account.balance);$('connection').textContent='MT5 connected';$('connLed').classList.add('ok')}else{$('balance').textContent='Not connected';$('connection').textContent='Waiting for MT5';$('connLed').classList.remove('ok')}
-  if(a.trading){const x=a.trading;$('open').textContent=x.open_count||0;$('pnl').textContent='P/L '+money(x.floating_pl);$('floating').textContent=money(x.floating_pl);$('results').textContent=(x.wins||0)+'W / '+(x.losses||0)+'L'}
- }).catch(()=>{$('connection').textContent='Telegram verification required'});
- fetch('/api/status').then(r=>r.json()).then(s=>{$('feed').textContent=s.feed_fresh?'FRESH':'STALE'}).catch(()=>{$('feed').textContent='Unavailable'});
+const tg=window.Telegram?.WebApp;tg?.ready();tg?.expand();const $=id=>document.getElementById(id);
+function money(v){const n=Number(v||0);return(n>=0?'+':'')+n.toFixed(2)}
+function val(x,...keys){for(const k of keys)if(x&&x[k]!=null)return x[k];return null}
+function renderTrading(x){if(!x)return;$('open').textContent=val(x,'open_count')||0;$('floating').textContent=money(val(x,'floating_pl')||0);$('results').textContent=(val(x,'wins')||0)+'W / '+(val(x,'losses')||0)+'L';
+ const sig=String(val(x,'signal','direction','side')||'WAIT').toUpperCase();$('signal').textContent=sig;$('signal').className='pill '+(sig==='BUY'?'buy':sig==='SELL'?'sell':'');
+ const p=val(x,'price','gold_price','current_price');$('price').textContent=p!=null?Number(p).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';
+ const e=val(x,'entry','entry_price');$('entry').textContent=e!=null?Number(e).toFixed(2):'—';const l=val(x,'lot','volume','lot_size');$('lot').textContent=l!=null?Number(l).toFixed(2):'—';
+ const s=val(x,'sl','stop','stop_loss');$('sl').textContent=s!=null?Number(s).toFixed(2):'—';const t=val(x,'tp','target','take_profit');$('tp').textContent=t!=null?Number(t).toFixed(2):'—';
 }
+function load(){fetch('/api/account',{headers:{'X-Telegram-Init-Data':tg?.initData||''}}).then(r=>r.ok?r.json():Promise.reject()).then(a=>{const active=a.demo_control==='START_DEMO';$('bot').textContent=active?(a.vps_acknowledged?'RUNNING':'STARTING'):'PAUSED';$('mode').textContent=active?'DEMO RUNNING':'MONITOR';
+ if(a.connected&&a.account){$('balance').textContent=new Intl.NumberFormat('en-US',{style:'currency',currency:a.account.currency}).format(a.account.balance);$('connection').textContent='MT5 connected';$('connLed').classList.add('ok')}else{$('balance').textContent='Not connected';$('connection').textContent='Waiting for MT5';$('connLed').classList.remove('ok')}renderTrading(a.trading);$('updated').textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'})}).catch(()=>{$('connection').textContent='Open from your Telegram Dashboard button'});
+ fetch('/api/status').then(r=>r.json()).then(s=>{$('feed').textContent=s.feed_fresh?'FRESH':'STALE'}).catch(()=>{$('feed').textContent='Unavailable'})}
 function send(cmd){if(tg?.sendData){tg.sendData(JSON.stringify({action:cmd}));tg.close()}else{location.href='https://t.me/Goldvvbot'}}
-$('start').addEventListener('click',()=>send('start'));$('stop').addEventListener('click',()=>send('pause'));$('refresh').addEventListener('click',load);load();setInterval(load,15000);
+$('start').onclick=()=>send('start');$('stop').onclick=()=>send('pause');$('refresh').onclick=load;load();setInterval(load,5000);
 </script></body></html>
