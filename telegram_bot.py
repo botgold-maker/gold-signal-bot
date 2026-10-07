@@ -208,7 +208,7 @@ def handle(action):
         control['state'] = 'START_DEMO'
         control['updated'] = time.time()
         control['ack'] = 0
-        return "▶️ Goldvvbot started.\n\n" + live_summary()
+        return "▶️ Goldvvbot started — immediate M5 scan complete.\n\n" + live_summary()
     if action in ("stop", "pause"):
         enabled = False
         control['paper_state'] = 'PAUSE'
@@ -237,7 +237,7 @@ def handle(action):
             raw = signal(df)
             side = str(raw.get('signal','WAIT'))
             if side not in ('BUY','SELL'):
-                return '📊 Gold setup: WAIT\\nNo qualifying setup right now.'
+                return '📊 Gold setup: WAIT\nNo qualifying setup right now.'
             lines = ['📊 Gold setup ready', 'Direction: ' + side]
             if raw.get('price') is not None: lines.append('Entry reference: ' + format(float(raw['price']), ',.2f'))
             if raw.get('stop') is not None: lines.append('SL: ' + format(float(raw['stop']), ',.2f'))
