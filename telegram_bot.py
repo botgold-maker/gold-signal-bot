@@ -244,7 +244,7 @@ def handle(action):
             if raw.get('target') is not None: lines.append('TP: ' + format(float(raw['target']), ',.2f'))
             if raw.get('rsi') is not None: lines.append('RSI: ' + str(raw['rsi']))
             lines.append('Live order: MANUAL in MT5')
-            return '\\n'.join(lines)
+            return '\n'.join(lines)
         except Exception as exc:
             return "Market signal unavailable: " + str(exc)[:200]
     return live_summary() + "\n\nChoose a button below."
