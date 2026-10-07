@@ -6,7 +6,7 @@
 <div class="section">Live monitor</div><div class="grid">
 <div class="tile"><div class="label">BOT</div><div class="value" id="bot">Checking…</div></div>
 <div class="tile"><div class="label">MARKET FEED</div><div class="value" id="feed">Checking…</div></div>
-<div class="tile"><div class="label">XAUUSD SIGNAL</div><div class="pill" id="signal">WAIT</div></div>
+<div class="tile"><div class="label">XAUUSD SIGNAL</div><div class="pill" id="signal">LIVE SCANNING</div></div>
 <div class="tile"><div class="label">GOLD PRICE</div><div class="value" id="price">—</div></div>
 <div class="tile"><div class="label">OPEN TRADES</div><div class="value" id="open">0</div></div>
 <div class="tile"><div class="label">FLOATING P/L</div><div class="value" id="floating">+0.00</div></div>
@@ -23,10 +23,10 @@ const tg=window.Telegram?.WebApp;tg?.ready();tg?.expand();const $=id=>document.g
 function money(v){const n=Number(v||0);return(n>=0?'+':'')+n.toFixed(2)}
 function val(x,...keys){for(const k of keys)if(x&&x[k]!=null)return x[k];return null}
 function renderTrading(x){if(!x)return;$('open').textContent=val(x,'open_count')||0;$('floating').textContent=money(val(x,'floating_pl')||0);$('results').textContent=(val(x,'wins')||0)+'W / '+(val(x,'losses')||0)+'L';
- const sig=String(val(x,'signal','direction','side')||'WAIT').toUpperCase();$('signal').textContent=sig;$('signal').className='pill '+(sig==='BUY'?'buy':sig==='SELL'?'sell':'');
+ const sig=String(val(x,'signal','direction','side')||'LIVE SCANNING').toUpperCase();$('signal').textContent=sig;$('signal').className='pill '+(sig==='BUY'?'buy':sig==='SELL'?'sell':'');
  const p=val(x,'price','gold_price','current_price');$('price').textContent=p!=null?Number(p).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';
- const e=val(x,'entry','entry_price');$('entry').textContent=e!=null?Number(e).toFixed(2):'—';const l=val(x,'lot','volume','lot_size');$('lot').textContent=l!=null?Number(l).toFixed(2):'—';
- const s=val(x,'sl','stop','stop_loss');$('sl').textContent=s!=null?Number(s).toFixed(2):'—';const t=val(x,'tp','target','take_profit');$('tp').textContent=t!=null?Number(t).toFixed(2):'—';
+ const e=val(x,'entry','entry_price');$('entry').textContent=e!=null?Number(e).toFixed(2):'NO SETUP YET';const l=val(x,'lot','volume','lot_size');$('lot').textContent=l!=null?Number(l).toFixed(2):'NO SETUP YET';
+ const s=val(x,'sl','stop','stop_loss');$('sl').textContent=s!=null?Number(s).toFixed(2):'NO SETUP YET';const t=val(x,'tp','target','take_profit');$('tp').textContent=t!=null?Number(t).toFixed(2):'NO SETUP YET';
 }
 let liveTimer=null;function load(){fetch('/api/account',{headers:{'X-Telegram-Init-Data':tg?.initData||''}}).then(r=>r.ok?r.json():Promise.reject()).then(a=>{const active=a.demo_control==='START_DEMO';$('bot').textContent=active?(a.vps_acknowledged?'RUNNING':'STARTING'):'PAUSED';$('mode').textContent=active?'DEMO RUNNING':'MONITOR';
  if(a.connected&&a.account){$('balance').textContent=new Intl.NumberFormat('en-US',{style:'currency',currency:a.account.currency}).format(a.account.balance);$('connection').textContent='MT5 connected';$('connLed').classList.add('ok')}else{$('balance').textContent='Not connected';$('connection').textContent='Waiting for MT5';$('connLed').classList.remove('ok')}renderTrading(a.trading);$('updated').textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit',fractionalSecondDigits:1})}).catch(()=>{$('connection').textContent='Open from your Telegram Dashboard button'});
