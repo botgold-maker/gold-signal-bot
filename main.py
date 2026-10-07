@@ -9,7 +9,7 @@ from risk import RiskManager
 
 SYMBOL = os.getenv('SYMBOL', 'XAU/USD')
 DERIV_APP_ID = os.getenv('DERIV_APP_ID', '1089')
-INTERVAL = os.getenv('INTERVAL', '15min')
+INTERVAL = os.getenv('INTERVAL', '5min')
 
 def indicators(data):
     close = data['close']
@@ -105,4 +105,4 @@ if __name__ == '__main__':
                 result['warning'] = 'Lot size requires verified broker contract specs; signal is not an order'
             print(result, flush=True)
         except Exception as exc: print({'error':str(exc)}, flush=True)
-        time.sleep(900)
+        time.sleep(300)
