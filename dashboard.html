@@ -16,7 +16,7 @@
 <div><div class="label">STOP LOSS</div><div class="value" id="sl">—</div></div><div><div class="label">TAKE PROFIT</div><div class="value" id="tp">—</div></div>
 </div></div>
 <div class="section">Performance</div><div class="card"><div class="grid"><div><div class="label">RESULTS</div><div class="value" id="results">—</div></div><div><div class="label">LAST UPDATE</div><div class="value" id="updated">—</div></div></div></div>
-<div class="section">Control center</div><div class="controls"><button class="btn" id="start">▶ Start</button><button class="btn stop" id="stop">■ Stop</button><button class="btn secondary wide" id="refresh">↻ Refresh now</button></div>
+<div class="section">Trade confirmation</div><button class="btn wide" id="confirmTrade" type="button" disabled>Confirm Trade in MT5</button><div class="section">Control center</div><div class="controls"><button class="btn" id="start">▶ Start</button><button class="btn stop" id="stop">■ Stop</button><button class="btn secondary wide" id="refresh">↻ Refresh now</button></div>
 <div class="foot">Live monitoring uses the MT5 feed from your VPS. Start/Stop controls the demo execution path. Real-money order entry remains manual-confirm only.</div>
 <script>
 const tg=window.Telegram?.WebApp;tg?.ready();tg?.expand();const $=id=>document.getElementById(id);
